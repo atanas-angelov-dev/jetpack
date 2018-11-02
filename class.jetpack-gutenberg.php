@@ -33,8 +33,8 @@ class Jetpack_Gutenberg {
 	 *
 	 * @var array $blocks Array of blocks we will be registering.
 	 */
-	public static $blocks = array();
-	public static $blocks_index = array();
+	private static $jetpack_blocks = array();
+	private static $blocks_index = array();
 	/**
 	 * Add a block to the list of blocks to be registered.
 	 *
@@ -42,7 +42,7 @@ class Jetpack_Gutenberg {
 	 * @param array  $args Arguments that are passed into the register_block_type.
 	 */
 	public static function add_block( $type, $args, $availability ) {
-		self::$blocks[ $type ] = array( 'args' => $args, 'availability' => $availability );
+		self::$jetpack_blocks[ $type ] = array( 'args' => $args, 'availability' => $availability );
 	}
 
 	/**
@@ -58,6 +58,7 @@ class Jetpack_Gutenberg {
 		if ( ! self::should_load_blocks() ) {
 			return;
 		}
+
 		/**
 		 * Filter the list of blocks that are available though jetpack.
 		 *
@@ -69,7 +70,7 @@ class Jetpack_Gutenberg {
 		 */
 		self::$blocks_index = apply_filters( 'jetpack_set_available_blocks', array() );
 
-		foreach ( self::$blocks as $type => $args ) {
+		foreach ( self::$jetpack_blocks as $type => $args ) {
 			if ( isset( $args['availability']['available'] ) && $args['availability']['available'] && in_array( $type, self::$blocks_index ) ) {
 				register_block_type( 'jetpack/' . $type, $args['args'] );
 			}
@@ -85,9 +86,10 @@ class Jetpack_Gutenberg {
 	}
 
 	public static function jetpack_set_available_blocks( $blocks ) {
-		$preset_blocks =  self::preset_exists( 'index' ) ? self::get_preset( 'index' ) : $blocks;
+		$preset_blocks_manifest =  self::preset_exists( 'block-manifest' ) ? self::get_preset( 'block-manifest' ) : (object) array( 'blocks' => $blocks );
+		$preset_blocks = isset( $preset_blocks_manifest->blocks ) ? (array) $preset_blocks_manifest->blocks : array() ;
 		if ( Jetpack_Constants::is_true( 'JETPACK_BETA_BLOCKS' ) ) {
-			$beta_blocks = self::preset_exists( 'index-beta' ) ? self::get_preset( 'index-beta' ) : array();
+			$beta_blocks = isset( $preset_blocks_manifest->betaBlocks ) ? (array) $preset_blocks_manifest->betaBlocks : array();
 			return array_merge( $preset_blocks, $beta_blocks );
 		}
 
@@ -102,7 +104,11 @@ class Jetpack_Gutenberg {
 
 		$blocks_availability = array(); // default
 
-		foreach ( self::$blocks as $type => $args ) {
+		foreach ( self::$jetpack_blocks as $type => $args ) {
+			if ( ! in_array( $type,  self::$blocks_index ) ) {
+				// Jetpack shouldn't expose blocks that are not in the manifest.
+				continue;
+			}
 			$availability = $args['availability'];
 			$available = array(
 				'available' => ( isset( $availability['available'] ) ? (bool) $availability['available'] : true ),
