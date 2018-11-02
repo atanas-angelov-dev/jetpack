@@ -54,12 +54,6 @@ class Jetpack_Simple_Payments {
 		$this->setup_cpts();
 
 		add_filter( 'the_content', array( $this, 'remove_auto_paragraph_from_product_description' ), 0 );
-
-		$is_available = $this->is_enabled_jetpack_simple_payments();
-		jetpack_register_block( 'simple-payments', array(), array(
-			'available' => $is_available,
-			'unavailable_reason' => ( ! $is_available ? 'missing_plan' : '' ),
-		) );
 	}
 
 	function remove_auto_paragraph_from_product_description( $content ) {
