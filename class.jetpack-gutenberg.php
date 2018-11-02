@@ -230,7 +230,7 @@ class Jetpack_Gutenberg {
 		}
 
 		$rtl = is_rtl() ? '.rtl' : '';
-		$beta = defined( 'JETPACK_BETA_BLOCKS' ) && JETPACK_BETA_BLOCKS ? '-beta' : '';
+		$beta = Jetpack_Constants::is_true('JETPACK_BETA_BLOCKS' ) ? '-beta' : '';
 
 		$editor_script = plugins_url( "_inc/blocks/editor{$beta}.js", JETPACK__PLUGIN_FILE );
 		$editor_style  = plugins_url( "_inc/blocks/editor{$beta}{$rtl}.css", JETPACK__PLUGIN_FILE );
